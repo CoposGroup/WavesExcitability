@@ -1,0 +1,62 @@
+\documentclass[12pt,pdftex]{report}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm, graphicx, hyperref}
+\usepackage{subfigure}
+\usepackage{fancyhdr}
+\usepackage{multirow, multicol}
+\usepackage{listings}
+\usepackage{tikz,graphicx}
+\pagestyle{fancy}
+
+\fancyhead[RO]{Turing Pattern Formation}
+\fancyhead[LO]{}
+
+\theoremstyle{definition}
+\newtheorem*{problem}{}
+\usepackage{comment}
+% to exclude solutions
+\excludecomment{solution}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\dydx}{\frac{dy}{dx}}
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+
+\usepackage{verbatim}
+\usepackage{multirow}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage[outdir=./]{epstopdf}
+\epstopdfsetup{outdir=./}
+
+\pgfplotsset{
+    every linear axis/.append style={
+       axis x line=center,
+       axis y line=center,
+       xlabel={$x$},
+       ylabel={$y$}
+    },
+    every axis plot/.append style={thick,mark=none}
+}
+\tikzset{
+    point/.style={circle,draw,fill,minimum width=0.3ex,inner sep=0pt,outer sep=0pt},
+    every label/.append style={black}
+}
+
+
+
+\begin{document}
+
+
+\noindent These equations are referred to as~\textbf{pattern formation equations} The equations describe the development of a shape, pattern, or form.  The equations above were proposed based on Turing's work by Gierer and Meinhardt in the 1970s. In these equations $a = a(t,x,y)$ represents the concentration of an activating chemical and $h = h(t,x,y)$ represents the concentration of an inhibiting chemical. As it turns out, these patterns cannot be observed in one spatial dimension, hence the reason why I ask you to solve this in 2D. Though neat!, a drawback to these equations (and an overall criticism) is that the equations do not explain the underlying chemical mechanism.  Later contributions by Murray in 1982 and others addressed this issue of connecting to the true underlying basis of biochemical interactions and geometric considerations. 
+\begin{eqnarray}
+\frac{\partial a}{\partial t} &=& f_1(a,h) + D \left( \frac{\partial^2 a}{\partial x^2} + \frac{\partial^2 a}{\partial y^2} \right) =  f_1(a,h) + D \nabla^2 a \\
+\frac{\partial h}{\partial t} &=& f_2(a,h) + \delta \left( \frac{\partial^2 h}{\partial x^2} + \frac{\partial^2 h}{\partial y^2} \right) =  f_2(a,h) + \delta \nabla^2 h,
+\end{eqnarray}
+where
+$$f_1(a,h) = c_1 - c_2 a + \frac{a^2}{h(1+Ka^2)}$$
+$$f_2(a,h) = a^2 - h$$
+Here, $a = a(t,x,y)$ and $h = h(t,x,y)$ are the solutions.  Use $D=1,\delta=40,c_1=0.01, c_2 = 1.2$. Run this code until $t=100$.  Use a spatial domain of $(x,y) = [0,1]\times[0,1]$ with your choice of grid spacing $\Delta x$, $\Delta y$. For simplicity use the same spatial discretization, aka $\Delta x = \Delta y$. For initial conditions, use $a_0(0,x,y)$ is a random number between 0.1 and 1 for all $x,y$, and $h_0(0,x,y) = 0.1$ for all $x,y$. 
+
+
+
+\end{document}
