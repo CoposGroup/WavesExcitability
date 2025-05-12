@@ -6,8 +6,8 @@ def laplacian(Z, DX=1.0):
     return (np.roll(Z, 1, axis=1) + np.roll(Z, -1, axis=1) + np.roll(Z, 1, axis=0) + np.roll(Z, -1, axis=0) - 4*Z) / DX**2
 
 # approximates the double derivative
-def double_derivative(Z):
-    return np.roll(Z, 1) + np.roll(Z, -1) - 2*Z
+def double_derivative(Z, DX=1.0):
+    return (np.roll(Z, 1) + np.roll(Z, -1) - 2*Z) / DX**2
 
 # generate correlated gaussian field
 def correlated_gaussian_field(SIGMA, S, SHAPE, MEAN=1.0):
