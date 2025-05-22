@@ -1,9 +1,12 @@
 function michaud()
+
+    clear; close all; clc
     
-    dt = 0.001;
+    dt = 0.01;
+    dx = 1.0;
     Nt = 100000;
     Nx = 100;
-    tplot = 100;
+    tplot = 1 / dt;
     
     % define parameters
     k0 = 0.00625;
@@ -23,36 +26,39 @@ function michaud()
     alpha = 1;
     beta = 1;
     
+    % set initial concentrations
     RT = 0.1+0.9*rand(Nx*Nx,1);
     RD = 0.1*ones(Nx*Nx,1);
     F = zeros(Nx*Nx,1);
     
-    RTnew = zeros(Nx*Nx,1);
-    RDnew = zeros(Nx*Nx,1);
-    RFnew = zeros(Nx*Nx,1);
-    
+    % initialize dW 
     sigma = 0.75;
     s = 4;
     mu = 1;
-    dWt = 1000;
-    dW = reshape(cgf2d(s, sigma, mu, [Nx, Nx]),Nx*Nx,1);
+    dWt = 10 / dt;
+    dW = cgf2d(s, sigma, mu, [Nx, Nx]);
 
-    L = lap2d_periodic(Nx, Nx);
+    % set laplacian matrix
+    L = lap2d(Nx, Nx)/dx^2;
     
-    %start the FTCS
+    % 
     for t = 1:Nt
-        R = reaction(RT,RD,F, k0, k1, k2, k3, k4, alpha, beta);
+
+        % set reaction term
+        R = (k0 + alpha * k1 * RT.^3 ./ (1 + k2 * RT.^2)) .* RD - (k3 + k4 * (1 + beta) * F) .* RT;
     
+        % set new concentrations
         RTnew = RT + dt*(R+Drt*L*RT);
-        RDnew = RD + dt*(k5-k6*RD-R+Drd*L*RD);
-        Fnew = F + dt*(k7 + (k8*RT.^2)./(1+k9*RT.^2)-k10*dW.*F+Df*L*F);
+        RDnew = RD + dt*(k5 - k6*RD - R + Drd*L*RD);
+        Fnew = F + dt*(k7 + (k8*RT.^2) ./ (1 + k9*RT.^2) - k10*reshape(dW,Nx*Nx,1).*F + Df*L*F);
     
+        % update concentrations
         RT = RTnew;
         RD = RDnew;
         F = Fnew;
     
         if mod(t,dWt)==0
-            dW = reshape(cgf2d(s, sigma, mu, [Nx, Nx]),Nx*Nx,1);
+            dW = cgf2d(s, sigma, mu, [Nx, Nx]);
         end
     
         if mod(t,tplot)==0

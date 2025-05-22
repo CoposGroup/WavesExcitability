@@ -35,7 +35,5 @@ function Z = cgf2d(s, sigma, mu, dim)
     % Crop back to original size
     Z = Z_ext(1:ny, 1:nx);
 
-    % Normalize and scale
-    Z = (Z - mean(Z(:))) / std(Z(:));
-    Z = mu + sigma * Z;
+    Z = mu + sigma * Z / std(Z(:));
 end
