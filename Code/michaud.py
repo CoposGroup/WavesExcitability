@@ -17,7 +17,7 @@ def run(params, output_name, mode="gif"):
     np.random.seed(random_seed)
 
     # define reaction function
-    def R(A,B,C):
+    def reaction(A,B,C):
         return (k0 + alpha*k1*A**3/(1 + k2*A**2))*B - (k3 + k4*(1 + beta)*C)*A
 
     # set initial concentrations
@@ -42,10 +42,16 @@ def run(params, output_name, mode="gif"):
     # simulate the PDE with finite difference method
     for i in range(steps):
 
+        R = reaction(RT,RD,F)
+
         # update concentrations
-        RT = RT + dt * (R(RT,RD,F) + Drt*laplacian(RT))
-        RD = RD + dt * (k5 - k6*RD - R(RT,RD,F) + Drd*laplacian(RD))
-        F = F + dt * (k7 + k8*RT**2 / (1 + k9*RT**2) - k10*dW*F + Df*laplacian(F))
+        RTnew = RT + dt * (R + Drt*laplacian(RT))
+        RDnew = RD + dt * (k5 - k6*RD - R + Drd*laplacian(RD))
+        Fnew = F + dt * (k7 + k8*RT**2 / (1 + k9*RT**2) - k10*dW*F + Df*laplacian(F))
+
+        RT = RTnew
+        RD = RDnew
+        F = Fnew
 
         # update stocastic noise term every f seconds
         if i % int(f/dt) == 0:
