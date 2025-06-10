@@ -3,6 +3,8 @@ clear; close all; clc
 % set random seed
 rng(42);
 
+% set output name
+output_file_name='michaud_simulation_k8x05.mat';
 % set model parameters
 k0 = 0.00625;
 k1 = 0.3125;
@@ -12,7 +14,7 @@ k4 = 0.05625;
 k5 = 0.0625;
 k6 = 0.02083;
 k7 = 0.001875;
-k8 = 0.140625;
+k8 = 0.140625*0.5;
 k9 = 0.25;
 k10 = 0.025;
 Drt = 0.08;
@@ -98,4 +100,4 @@ end
 RTstack = permute(frames3D, [3, 1, 2]);
 
 % save to .mat (v7.3 for large arrays)
-save('RTstack.mat', 'RTstack', '-v7.3');
+save(output_file_name, 'RTstack', '-v7.3');
