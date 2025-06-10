@@ -58,21 +58,29 @@ if __name__=="__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("--wave_type", default='travelling')
-    parser.add_argument("--win_size", default=5, type=int)
-
+    parser.add_argument("--win_size", default=100, type=int)
+    parser.add_argument("--file", default=None)
+    parser.add_argument("--truncate", default=20)
+    parser.add_argument("--save_velocity", action='store_true')
     args = parser.parse_args()
 
     wave_type = args.wave_type
     win_size = args.win_size
-    dir_path = f"/home/theniche/School/REU25/WavesExcitability/Code/frames_{wave_type}"
-    
-    #Load frames
-    from directory_tools import *
-    vid_frames = getFramesInOrder(dir_path)
+    k = args.truncate
 
-    #Truncate initial frames
-    vid_frames = vid_frames[20:]
-    vid_frames = np.asarray(vid_frames)
+    if args.file is not None:
+        vid_frames = np.load(args.file)
+    else:
+        dir_path = f"frames_{wave_type}"
+    
+        #Load frames
+        from directory_tools import *
+        vid_frames = getFramesInOrder(dir_path)
+
+        vid_frames = np.asarray(vid_frames)
+
+    #Truncate Initial Frames
+    vid_frames = vid_frames[k:]
 
     #Change concentrations to image 
     max_conc = np.max(vid_frames)
@@ -81,7 +89,7 @@ if __name__=="__main__":
 
     #Save and load video (mainly to maintain compatibility with opencv)
     save_vid(img_frames, output_path=f'output_{wave_type}.mp4', frame_size = vid_frames[0].shape)
-    vid = cv.VideoCapture(f"/home/theniche/School/REU25/WavesExcitability/Code/output_{wave_type}.mp4")
+    vid = cv.VideoCapture(f"output_{wave_type}.mp4")
 
 
     # Parameters for lucas kanade optical flow
@@ -144,8 +152,10 @@ if __name__=="__main__":
     print(f'Mean Length = {np.mean(lengths)}')
     print(f'Mean Velocity = {np.median(velocities)}')
 
-    save_vid([old_frame] + new_frames, output_path=f'optical_flow_{wave_type}.mp4', fps=3, frame_size=img_frames[0].shape, is_color=True)
-    np.savetxt(f'{wave_type}_velocities.txt', velocities)
-    np.savetxt(f'{wave_type}_lengths.txt', lengths)
+    save_vid([old_frame] + new_frames, output_path=f'optical_flow_{wave_type}.mp4', fps=10, frame_size=img_frames[0].shape, is_color=True)
+
+    if args.save_velocity:
+        np.savetxt(f'{wave_type}_velocities.txt', velocities)
+        np.savetxt(f'{wave_type}_lengths.txt', lengths)
 
 
