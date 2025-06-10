@@ -4,7 +4,7 @@ clear; close all; clc
 rng(42);
 
 % set output name
-output_file_name='michaud_simulation_k8x05.mat';
+output_file_name='michaud_simulation_alphax05.mat';
 % set model parameters
 k0 = 0.00625;
 k1 = 0.3125;
@@ -14,13 +14,13 @@ k4 = 0.05625;
 k5 = 0.0625;
 k6 = 0.02083;
 k7 = 0.001875;
-k8 = 0.140625*0.5;
+k8 = 0.140625;
 k9 = 0.25;
 k10 = 0.025;
 Drt = 0.08;
 Drd = 0.4;
 Df = 0.001;
-alpha = 1;
+alpha = 1*0.5;
 beta = 1;
 
 % set simulation parameters
