@@ -36,7 +36,7 @@ F = zeros(Nx*Nx,1);
 % initialize stochastic noise term (dW)
 sigma = 0.75;
 s = 4;
-mu = 1;
+mu = 1*5;
 dWt = 10 / dt;
 dW = cgf2d(s, sigma, mu, [Nx, Nx]);
 
