@@ -100,15 +100,17 @@ if __name__=="__main__":
     color = np.random.randint(0, 255, (100, 3))
 
     # Take first frame and find corners in it
+    featsToCheck = 10
     ret, old_frame = vid.read()
     old_gray = cv.cvtColor(old_frame, cv.COLOR_BGR2GRAY)
-    p0= findWaveFronts(old_gray, k=10).astype(np.float32)
+    p0= findWaveFronts(old_gray, k=featsToCheck).astype(np.float32)
 
 
     # Create a mask image for drawing purposes
     new_frames = []
     final_points = {(point[0],point[1]) : (point[0], point[1]) for point in p0[:,0, :]}
     final_times = {(point[0],point[1]): 0 for point in p0[:,0, :]}
+    paths = {(point[0],point[1]) : [(point[0], point[1])] for point in p0[:,0, :]}
     mask = np.zeros_like(old_frame)
     frame_num = 0
     while(1):
@@ -128,10 +130,14 @@ if __name__=="__main__":
         for i, (new, old) in enumerate(zip(good_new, good_old)):
             a, b = new.ravel()
             c, d = old.ravel()
+
+            ##Keep track of final points
             for key, value in final_points.items():
                 if value == (c, d):
                     final_points[key] = (a,b)
                     final_times[key] = frame_num
+                    paths[key].append(value)
+            
             mask = cv.line(mask, (int(a), int(b)), (int(c), int(d)), color[i].tolist(), 2)
             frame = cv.circle(frame, (int(a), int(b)), 5, color[i].tolist(), -1)
         img = cv.add(frame, mask)
@@ -149,6 +155,14 @@ if __name__=="__main__":
             velocities.append(dist/time)
         else:
             velocities.append(0.0)
+    
+    sum = 0.0
+    for key, path in paths.items():
+        path = np.asarray(path)    
+        disps = np.linalg.norm(path[:-1] - path[1:], axis=1)
+        sum = sum + np.sum(disps)
+        
+    print(f'Total_distance_travelled = {sum/featsToCheck}')
     print(f'Mean Length = {np.mean(lengths)}')
     print(f'Mean Velocity = {np.median(velocities)}')
 
