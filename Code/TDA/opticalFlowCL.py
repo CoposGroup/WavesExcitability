@@ -60,13 +60,15 @@ if __name__=="__main__":
     parser.add_argument("--wave_type", default='travelling')
     parser.add_argument("--win_size", default=100, type=int)
     parser.add_argument("--file", default=None)
-    parser.add_argument("--truncate", default=20)
+    parser.add_argument("--truncate", default=20, type=int)
     parser.add_argument("--save_velocity", action='store_true')
+    parser.add_argument("--output_name", default='output', type=str)
     args = parser.parse_args()
 
     wave_type = args.wave_type
     win_size = args.win_size
     k = args.truncate
+    output_name = args.output_name
 
     if args.file is not None:
         vid_frames = np.load(args.file)
@@ -126,6 +128,7 @@ if __name__=="__main__":
         if p1 is not None:
             good_new = p1[st==1]
             good_old = p0[st==1]
+            
         # draw the tracksstanding
         for i, (new, old) in enumerate(zip(good_new, good_old)):
             a, b = new.ravel()
@@ -157,19 +160,22 @@ if __name__=="__main__":
             velocities.append(0.0)
     
     sum = 0.0
+    speeds = []
     for key, path in paths.items():
         path = np.asarray(path)    
         disps = np.linalg.norm(path[:-1] - path[1:], axis=1)
+        speeds.append(np.sum(disps)/final_times[key])
         sum = sum + np.sum(disps)
-        
-    print(f'Total_distance_travelled = {sum/featsToCheck}')
+
+    print(f'Mean_Total_distance_travelled = {sum/featsToCheck}')
+    print(f'Mean Speed = {np.mean(speeds)}')
     print(f'Mean Length = {np.mean(lengths)}')
     print(f'Mean Velocity = {np.median(velocities)}')
 
     save_vid([old_frame] + new_frames, output_path=f'optical_flow_{wave_type}.mp4', fps=10, frame_size=img_frames[0].shape, is_color=True)
 
     if args.save_velocity:
-        np.savetxt(f'{wave_type}_velocities.txt', velocities)
-        np.savetxt(f'{wave_type}_lengths.txt', lengths)
+        np.savetxt(f'{output_name}_velocities.txt', velocities)
+        np.savetxt(f'{output_name}_lengths.txt', lengths)
 
 
