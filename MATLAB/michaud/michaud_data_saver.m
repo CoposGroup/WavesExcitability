@@ -1,103 +1,74 @@
 clear; close all; clc
+rng(42);                                % reproducibility
 
-% set random seed
-rng(42);
+%% ----------------------------------------------------------------
+% 1. CONSTANTS THAT NEVER CHANGE
+%% ----------------------------------------------------------------
+k0 = 0.00625;  k1 = 0.3125;  k2 = 1;
+k3 = 0.0625;   k4 = 0.05625;
+k5 = 0.0625;   k6 = 0.02083;
+k7 = 0.001875; k8 = 0.140625*2;
+k9 = 0.25;     k10 = 0.025;
+Drt = 0.08;    Drd = 0.4;
+Df0 = 0.001;                       % <-- base value you asked to vary
+alpha = 1;    beta  = 1;
 
-% set output name
-output_file_name='michaud_simulation_random_attempt';
-% set model parameters
-k0 = 0.00625;
-k1 = 0.3125;
-k2 = 1;
-k3 = 0.0625;
-k4 = 0.05625;
-k5 = 0.0625;
-k6 = 0.02083;
-k7 = 0.001875;
-k8 = 0.140625*0.1;
-k9 = 0.25;
-k10 = 0.025;
-Drt = 0.08;
-Drd = 0.4;
-Df = 0.001;
-alpha = 1;
-beta = 1;
+dt = 0.1;      dx = 1.0;
+Nt = 1000;     Nx = 100;
+tplot = 1;
 
-% set simulation parameters
-dt    = 0.1;   % time step
-dx    = 1.0;    % x step
-Nt    = 1000;   % run time (s)
-Nx    = 100;    % number of cells
-tplot = 1;      % frame plot interval (s)
-
-% how many frames?
 nFrames  = floor(Nt/tplot) + 1;
-frames3D = zeros(Nx, Nx, nFrames);   % pre-allocate (x,y,frame)
-frameIdx = 1;
+sigma = 0.75; s = 4; mu = 1;         % noise parameters
+dWt = 10/dt;                         % refresh period for noise
 
-% set initial concentrations
-RT = 0.1 + 0.9*rand(Nx*Nx,1);
-RD = 0.1 * ones(Nx*Nx,1);
-F  = zeros(Nx*Nx,1);
+L = lap2d(Nx, Nx)/dx^2;              % Laplacian operator
 
-% store initial frame
-frames3D(:,:,frameIdx) = reshape(RT, Nx, Nx);
+%% ----------------------------------------------------------------
+% 2. LIST OF FACTORS WE WANT TO TRY
+%% ----------------------------------------------------------------
+dfFactors = [1 2];           % <- put any multipliers you like
+results = struct();                  % structure to hold in-memory copies
 
-% initialize stochastic noise term (dW)
-sigma = 0.75;
-s     = 4;
-mu    = 1;
-dWt   = 10 / dt;
-dW    = cgf2d(s, sigma, mu, [Nx, Nx]);
+%% ----------------------------------------------------------------
+% 3. MAIN LOOP OVER THOSE FACTORS
+%% ----------------------------------------------------------------
+for m = dfFactors
+    % ---- names & parameters for THIS run ----
+    Df  = Df0 * m;                              % scaled diffusion
+    tag = sprintf('dfx%d', m);                  % ‘dfx20’, ‘dfx50’, …
+    outfile = sprintf('michaud_simulation_%s.mat', tag);
 
-% create laplacian matrix
-L = lap2d(Nx, Nx)/dx^2;
+    % ---- reset all state variables ----
+    RT = 0.1 + 0.9*rand(Nx*Nx,1);
+    RD = 0.1 * ones(Nx*Nx,1);
+    F  = zeros(Nx*Nx,1);
 
-% (optional) set up figure for on-screen preview
-plt = pcolor(reshape(RT, Nx, Nx));
-shading flat;
-colormap(parula);
-clim([0 5]);
-colorbar;
-axis square off;
-title('Time = 0 s');
+    frames3D = zeros(Nx, Nx, nFrames);
+    frameIdx = 1;
+    frames3D(:,:,frameIdx) = reshape(RT, Nx, Nx);
 
-% main reaction–diffusion loop
-for t = 1 : Nt/dt
+    dW = cgf2d(s, sigma, mu, [Nx, Nx]);         % first noise field
 
-    % reaction term
-    R = (k0 + alpha * k1 * RT.^3 ./ (1 + k2 * RT.^2)) .* RD ...
-        - (k3 + k4 * (1 + beta) * F) .* RT;
+    % ---- run the reaction–diffusion simulation ----
+    for t = 1:Nt/dt
+        R = (k0 + alpha*k1*RT.^3./(1 + k2*RT.^2)).*RD ...
+            - (k3 + k4*(1 + beta)*F).*RT;
 
-    % Euler update + diffusion
-    RTnew = RT + dt * (R + Drt*L*RT);
-    RDnew = RD + dt * (k5 - k6*RD - R + Drd*L*RD);
-    Fnew  = F  + dt * (k7 + (k8*RT.^2) ./ (1 + k9*RT.^2) ...
-                 - k10*reshape(dW, Nx*Nx, 1).*F + Df*L*F);
+        RT = RT + dt*(R            + Drt*L*RT);
+        RD = RD + dt*(k5 - k6*RD - R + Drd*L*RD);
+        F  = F  + dt*(k7 + (k8*RT.^2)./(1 + k9*RT.^2) ...
+              - k10*reshape(dW, Nx*Nx, 1).*F + Df*L*F);
 
-    RT = RTnew;
-    RD = RDnew;
-    F  = Fnew;
-
-    % refresh noise occasionally
-    if mod(t, dWt) == 0
-        dW = cgf2d(s, sigma, mu, [Nx, Nx]);
+        if mod(t, dWt) == 0,  dW = cgf2d(s, sigma, mu, [Nx, Nx]);  end
+        if mod(t, round(tplot/dt)) == 0
+            frameIdx = frameIdx + 1;
+            frames3D(:,:,frameIdx) = reshape(RT, Nx, Nx);
+        end
     end
 
-    % store frame every tplot seconds
-    if mod(t, round(tplot/dt)) == 0
-        frameIdx = frameIdx + 1;
-        frames3D(:,:,frameIdx) = reshape(RT, Nx, Nx);
-
-        % (optional) update on-screen figure
-        set(plt, 'CData', reshape(RT, Nx, Nx));
-        title(sprintf('Time = %4.0f s', t*dt));
-        drawnow;
-    end
+    % ---- stack frames + stash results ----
+    RTstack = permute(frames3D, [3 1 2]);
+    results.(tag) = RTstack;                    % keeps it in memory
+    save(outfile, 'RTstack', '-v7.3');          % writes to disk
+    fprintf('Finished %s (Df = %.4g)\n', tag, Df);
 end
-
-% permute to (frames, x, y)
-RTstack = permute(frames3D, [3, 1, 2]);
-
-% save to .mat (v7.3 for large arrays)
-save(output_file_name, 'RTstack', '-v7.3');
